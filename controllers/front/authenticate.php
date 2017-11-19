@@ -36,8 +36,12 @@ class Kk_SocialloginAuthenticateModuleFrontController extends ModuleFrontControl
         //Initialize
         $action = Tools::getValue('action', null);
         $mode = Tools::getValue('mode','request');
-
-        $redirectUrl = $this->context->link->getModuleLink('kk_sociallogin','authenticate',array('action' => $action, 'mode' => 'response'));
+        $pageType = Tools::getValue('page_type', null);
+        if ($pageType == 'checkout') {
+            $redirectUrl = $this->context->link->getModuleLink('kk_sociallogin', 'authenticate', array('action' => $action, 'mode' => 'response', 'page_type' => 'checkout'));
+        } else {
+            $redirectUrl = $this->context->link->getModuleLink('kk_sociallogin', 'authenticate', array('action' => $action, 'mode' => 'response'));
+        }
 
         // print_r($redirectUrl);
         // die;
@@ -58,12 +62,12 @@ class Kk_SocialloginAuthenticateModuleFrontController extends ModuleFrontControl
                     ));
 
                     $fbUser = $facebook->getUser();
-                    
+
                     switch ($mode) {
                         case 'request':
                           Tools::redirect($facebook->getLoginUrl(array('redirect_uri'=>$redirectUrl,'scope'=>"email")));
                             break;
-                        
+
                         case 'response':
                             $userProfile = $facebook->api('/me?fields=id,first_name,last_name,email,link,gender,locale,picture');
 
@@ -100,9 +104,9 @@ class Kk_SocialloginAuthenticateModuleFrontController extends ModuleFrontControl
                         case 'request':
                             Tools::redirect($gClient->createAuthUrl());
                             break;
-                        
+
                         case 'response':
-                            
+
                             $gClient->authenticate();
                             $userProfile = $google_oauthV2->userinfo->get();
 
@@ -119,13 +123,13 @@ class Kk_SocialloginAuthenticateModuleFrontController extends ModuleFrontControl
                 }
 
                 break;
-            
+
             default:
-                
+
                 Tools::redirect($this->context->link->getPageLink('authentication',true));
                 break;
         }
-            
+
         //Check User Exist
         if($this->userExist($user['email'])){
 
@@ -138,7 +142,11 @@ class Kk_SocialloginAuthenticateModuleFrontController extends ModuleFrontControl
         }
 
         //Redirect after login
-        Tools::redirect($this->context->link->getPageLink('my-account'));
+        if ($pageType == 'checkout') {
+            Tools::redirect($this->context->link->getPageLink('order'));
+        } else {
+            Tools::redirect($this->context->link->getPageLink('my-account'));
+        }
     }
 
     public function userExist($email) {
